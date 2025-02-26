@@ -1,0 +1,17 @@
+# Byte-compiled / optimized / DLL files
+*.py[cod]
+__pycache__/
+
+# Virtual environment folders
+venv/
+env/
+
+# Django stuff:
+*.sqlite3
+
+# Sensitive environment variables
+.env
+
+# OS-specific files
+.DS_Store
+.idea/
