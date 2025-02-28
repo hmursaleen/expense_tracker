@@ -70,7 +70,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'expense_tracker.wsgi.application'
 
-
+#change
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
