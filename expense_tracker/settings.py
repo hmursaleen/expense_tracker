@@ -99,6 +99,41 @@ DATABASES = {
 }
 
 
+#configure the REST framework to use JWT authentication and set some basic token settings.
+from datetime import timedelta
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        #This class will automatically handle the token parsing and validation for incoming requests.
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+        #Setting IsAuthenticated as a default permission ensures endpoints are protected by default. 
+        #(For public endpoints like registration, you can override this in your views.)
+    ),
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=10), #Access tokens are used to authenticate requests to protected resources
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    #Refresh tokens are used to obtain new access tokens without requiring the user to re-authenticate.
+    #A longer refresh token lifetime allows users to maintain a session for a longer period.
+    
+    'ROTATE_REFRESH_TOKENS': False,
+    #When set to True, each time a refresh token is used to obtain a new access token, 
+    #a new refresh token is also issued, and the old refresh token is invalidated.
+    #When set to False, the same refresh token can be used multiple times until it expires.
+    
+    'BLACKLIST_AFTER_ROTATION': True,
+    #This setting is only relevant when 'ROTATE_REFRESH_TOKENS' is set to True. Because in the 
+    #example code rotation is set to false, this setting has no effect.
+    #If rotation was enabled, this line would determine whether the old refresh token is added 
+    #to a blacklist after a rotation. Blacklisting prevents the old refresh token from being used again.
+}
+
+
+
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 

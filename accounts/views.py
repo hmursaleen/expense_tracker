@@ -3,12 +3,20 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth import login
 from .serializers import UserRegistrationSerializer, UserLoginSerializer
+from rest_framework.permissions import AllowAny
 
 
 
 
 
 class UserRegistrationView(APIView):
+    '''
+    DRF settings enforce the IsAuthenticated permission by default. This means every endpoint 
+    requires authentication unless you explicitly override it. Since registration should be open to 
+    unauthenticated users, you need to override the permission for the registration view.
+    '''
+    permission_classes = [AllowAny]
+
     def post(self, request):
         serializer = UserRegistrationSerializer(data=request.data)
         if serializer.is_valid():
@@ -27,6 +35,8 @@ class UserRegistrationView(APIView):
 
 
 class UserLoginView(APIView):
+    permission_classes = [AllowAny]
+    
     def post(self, request):
         serializer = UserLoginSerializer(data=request.data)
         if serializer.is_valid():
