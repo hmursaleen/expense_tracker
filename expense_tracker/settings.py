@@ -42,6 +42,9 @@ INSTALLED_APPS = [
     #custom apps
     'rest_framework',
     'accounts.apps.AccountsConfig',
+    'expenses.apps.ExpensesConfig',
+    #'rest_framework_simplejwt.token_blacklist',
+    #If you want token rotation and to blacklist refresh tokens after they’re used, enable the blacklist app.
 ]
 
 MIDDLEWARE = [
@@ -143,6 +146,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        #'OPTIONS': {'min_length': 8},  # enforce a minimum length
     },
     {
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',

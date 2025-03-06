@@ -35,6 +35,11 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         '''
         validated_data.pop('password2')
         user = User.objects.create_user(**validated_data)
+        '''
+        Django’s built-in User model and its create_user() method automatically hash passwords 
+        using a strong algorithm (PBKDF2 by default). This means when you register a user using 
+        your serializer, the password isn’t stored as plain text.
+        '''
         return user
 
 
