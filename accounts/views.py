@@ -4,7 +4,8 @@ from rest_framework import status
 from django.contrib.auth import login
 from .serializers import UserRegistrationSerializer, UserLoginSerializer
 from rest_framework.permissions import AllowAny
-
+#import logging
+#logger = logging.getLogger(__name__)
 
 
 
@@ -23,6 +24,7 @@ class UserRegistrationView(APIView):
             serializer.save()
             return Response({"message": "Registration successfull."}, status=status.HTTP_201_CREATED)
         
+        #logger.info("Registration failed: %s", serializer.errors)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -44,4 +46,5 @@ class UserLoginView(APIView):
             login(request, user) #log the user in using Django's session system
             return Response({"message": "Login successful."}, status=status.HTTP_200_OK)
         
+        #logger.info("Login failed: %s", serializer.errors)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

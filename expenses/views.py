@@ -1,9 +1,22 @@
-from rest_framework import generics
+from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from .models import Expense
 from .serializers import ExpenseSerializer
 from django.utils import timezone
 from datetime import timedelta, datetime
+import logging
+from rest_framework.response import Response
+from rest_framework.exceptions import ValidationError
+
+
+#logger = logging.getLogger(__name__)
+'''
+We import Python’s built-in logging module and create a logger with 
+logger = logging.getLogger(__name__). This allows us to record errors 
+(for example, invalid date formats) which can be invaluable during debugging
+and monitoring.
+'''
+
 
 class ExpenseListCreateView(generics.ListCreateAPIView):
     serializer_class = ExpenseSerializer
@@ -34,10 +47,10 @@ class ExpenseListCreateView(generics.ListCreateAPIView):
                         start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
                         end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
                         queryset = queryset.filter(date__range=[start_date, end_date])
-                    except ValueError:
-                        #If date parsing fails, raise an error or ignore filtering.
-                        #For now, ignore filtering if the dates are invalid.
-                        pass
+                    except ValueError as e:
+                        # Log the error with details and raise a validation error.
+                        #logger.error("Invalid date format in custom filter: %s", e)
+                        raise ValidationError({"detail": "Invalid date format provided. Expected YYYY-MM-DD for start_date and end_date."})
         return queryset
 
     def get_serializer_context(self):
@@ -47,6 +60,15 @@ class ExpenseListCreateView(generics.ListCreateAPIView):
         context = super().get_serializer_context()
         context.update({"request": self.request})
         return context
+
+
+
+
+
+
+
+
+
 
 class ExpenseDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ExpenseSerializer

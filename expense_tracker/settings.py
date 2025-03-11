@@ -41,6 +41,7 @@ INSTALLED_APPS = [
 
     #custom apps
     'rest_framework',
+    'drf_yasg',
     'accounts.apps.AccountsConfig',
     'expenses.apps.ExpensesConfig',
     #'rest_framework_simplejwt.token_blacklist',
@@ -178,3 +179,52 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+import os
+
+'''
+To ensure that these logged errors are captured (for example, in the console or a log file)
+, you should configure Django’s logging in your settings.py. Here’s a sample configuration:
+'''
+
+'''
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '[{asctime}] {levelname} [{name}] {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname}: {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+        'file': {
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'expense_tracker.log'),
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        # Capture logs from your application
+        '': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',  # Change to DEBUG for more detailed output
+        },
+        # Optionally override specific loggers
+        'django.request': {
+            'handlers': ['console', 'file'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+    },
+}
+'''

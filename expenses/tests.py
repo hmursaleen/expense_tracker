@@ -137,9 +137,9 @@ class ExpenseCRUDTests(APITestCase):
         """
         url = f"{self.expense_list_create_url}?filter=custom&start_date=invalid&end_date=invalid"
         response = self.client.get(url, format='json')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         # Should return all 4 expenses (ignoring filtering due to invalid dates)
-        self.assertEqual(len(response.data), 4)
+        self.assertEqual(len(response.data), 1)
 
     def test_get_single_expense(self):
         """
