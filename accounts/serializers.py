@@ -69,6 +69,4 @@ class UserLoginSerializer(serializers.Serializer):
             raise serializers.ValidationError("Username or password can't be empty")
 
         data['user'] = user
-        return data 
-
-
+        return data
