@@ -8,6 +8,17 @@ from rest_framework.permissions import AllowAny
 #logger = logging.getLogger(__name__)
 
 
+'''
+What is APIView?
+APIView is a base class in Django REST Framework (DRF) that provides core functionality for handling HTTP requests. It:
+Handles request/response cycle
+Provides authentication and permission checking
+Manages content negotiation
+Handles exceptions
+Provides method handlers (get, post, put, delete, etc.)
+
+user APIView rather than GenericAPIView or CreateAPIView if you need more control over the process
+'''
 
 
 class UserRegistrationView(APIView):
@@ -18,7 +29,18 @@ class UserRegistrationView(APIView):
     def post(self, request):
         serializer = UserRegistrationSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            '''
+            the is_valid method automatically:
+            Triggers field-level validation.
+            Triggers validate() method (of serializer).
+            Validates model constraints.
+            '''
+            serializer.save() #it calles the create() method of serializer
+            '''
+            You don't need to explicitly call validate() or create() - DRF handles this automatically.
+            is_valid() triggers the validation chain.
+            save() triggers the creation process.
+            '''
             return Response({"message": "Registration successfull."}, status=status.HTTP_201_CREATED)
         
         #logger.info("Registration failed: %s", serializer.errors)

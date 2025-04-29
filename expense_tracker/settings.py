@@ -45,7 +45,7 @@ INSTALLED_APPS = [
     'accounts.apps.AccountsConfig',
     'expenses.apps.ExpensesConfig',
     #'rest_framework_simplejwt.token_blacklist',
-    #If you want token rotation and to blacklist refresh tokens after they’re used, enable the blacklist app.
+    #If you want token rotation and to blacklist refresh tokens after they’re used, enable the blacklist app & then migrate the database to setup necessary tables.
 ]
 
 MIDDLEWARE = [
@@ -115,6 +115,10 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
         #Setting IsAuthenticated as a default permission ensures endpoints are protected by default. 
         #(For public endpoints like registration, you can override this in your views.)
+        '''
+        Either you rely on the global default permissions (set in settings with IsAuthenticated),
+        Or explicitly set the permission class in your view.
+        '''
     ),
 }
 
@@ -129,7 +133,7 @@ SIMPLE_JWT = {
     #a new refresh token is also issued, and the old refresh token is invalidated.
     #When set to False, the same refresh token can be used multiple times until it expires.
     
-    'BLACKLIST_AFTER_ROTATION': True,
+    'BLACKLIST_AFTER_ROTATION': True, #it requiers additinal setup
     #This setting is only relevant when 'ROTATE_REFRESH_TOKENS' is set to True. Because in the 
     #example code rotation is set to false, this setting has no effect.
     #If rotation was enabled, this line would determine whether the old refresh token is added 
