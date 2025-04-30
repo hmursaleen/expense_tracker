@@ -115,10 +115,8 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
         #Setting IsAuthenticated as a default permission ensures endpoints are protected by default. 
         #(For public endpoints like registration, you can override this in your views.)
-        '''
-        Either you rely on the global default permissions (set in settings with IsAuthenticated),
-        Or explicitly set the permission class in your view.
-        '''
+        #Either you rely on the global default permissions (set in settings with IsAuthenticated),
+        #Or explicitly set the permission class in your view.
     ),
 }
 
