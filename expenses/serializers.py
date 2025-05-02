@@ -2,6 +2,8 @@ from rest_framework import serializers
 from .models import Expense
 
 class ExpenseSerializer(serializers.ModelSerializer):
+    valid_categories = None #Cache the valid categories
+
     class Meta:
         model = Expense
         fields = ['id', 'user', 'amount', 'date', 'description', 'category', 'created_at', 'updated_at']
@@ -13,10 +15,12 @@ class ExpenseSerializer(serializers.ModelSerializer):
         return value
 
     def validate_category(self, value):
-        valid_categories = [choice[0] for choice in Expense.CATEGORY_CHOICES]
-        if value not in valid_categories:
+        if self._valid_categories is None:
+            self._valid_categories = [choice[0] for choice in Expense.CATEGORY_CHOICES]
+        
+        if value not in self._valid_categories:
             raise serializers.ValidationError(
-                f"Category must be one of the following: {', '.join(valid_categories)}."
+                f"Category must be one of the following: {', '.join(self._valid_categories)}."
             )
         return value
 
