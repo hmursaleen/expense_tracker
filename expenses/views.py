@@ -1,5 +1,5 @@
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.exceptions import ValidationError, NotFound
@@ -12,13 +12,12 @@ import logging
 #logger = logging.getLogger(__name__)
 
 class ExpenseView(APIView):
-    permission_classes = [IsAuthenticated]
+    #permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get_object(self, pk=None):
-        """
-        Get the expense object and verify ownership.
-        If pk is None, returns all expenses for the user.
-        """
+        #Get the expense object and verify ownership. If pk is None, returns all expenses for the user.
+        
         try:
             if pk is None:
                 return Expense.objects.select_related('user').filter(user=self.request.user)
@@ -31,9 +30,8 @@ class ExpenseView(APIView):
             raise NotFound("Expense not found.")
 
     def _apply_filters(self, queryset):
-        """
-        Apply date-based filtering to the queryset.
-        """
+        #Apply date-based filtering to the queryset.
+        
         filter_type = self.request.query_params.get('filter')
         if not filter_type:
             return queryset
@@ -54,9 +52,8 @@ class ExpenseView(APIView):
         return queryset
 
     def _apply_custom_date_filter(self, queryset):
-        """
-        Apply custom date range filtering to the queryset.
-        """
+        #Apply custom date range filtering to the queryset.
+        
         start_date_str = self.request.query_params.get('start_date')
         end_date_str = self.request.query_params.get('end_date')
 
@@ -82,9 +79,8 @@ class ExpenseView(APIView):
             })
 
     def _apply_search_and_ordering(self, queryset):
-        """
-        Apply search and ordering to the queryset.
-        """
+        #Apply search and ordering to the queryset.
+        
         # Apply ordering
         ordering = self.request.query_params.get('ordering', '-date')
         if ordering.lstrip('-') in ['date', 'amount', 'created_at']:
@@ -102,9 +98,8 @@ class ExpenseView(APIView):
         return queryset
 
     def get(self, request, pk=None):
-        """
-        List all expenses or retrieve a specific expense.
-        """
+        #List all expenses or retrieve a specific expense.
+        
         try:
             if pk is None:
                 # List all expenses
@@ -128,9 +123,6 @@ class ExpenseView(APIView):
             )
 
     def post(self, request):
-        """
-        Create a new expense.
-        """
         try:
             serializer = ExpenseSerializer(data=request.data, context={'request': request})
             serializer.is_valid(raise_exception=True)
@@ -146,9 +138,6 @@ class ExpenseView(APIView):
             )
 
     def put(self, request, pk):
-        """
-        Update an expense (full update).
-        """
         try:
             expense = self.get_object(pk)
             serializer = ExpenseSerializer(expense, data=request.data, context={'request': request})
@@ -167,9 +156,6 @@ class ExpenseView(APIView):
             )
 
     def patch(self, request, pk):
-        """
-        Update an expense (partial update).
-        """
         try:
             expense = self.get_object(pk)
             serializer = ExpenseSerializer(expense, data=request.data, partial=True, context={'request': request})
@@ -188,9 +174,6 @@ class ExpenseView(APIView):
             )
 
     def delete(self, request, pk):
-        """
-        Delete an expense.
-        """
         try:
             expense = self.get_object(pk)
             expense.delete()
