@@ -58,12 +58,21 @@ class ExpenseView(APIView):
                     queryset = queryset.order_by(ordering)
                 
                 serializer = ExpenseSerializer(queryset, many=True)
+                return Response({
+                    'status': 'success',
+                    'message': 'Expenses retrieved successfully',
+                    'data': serializer.data,
+                    'count': queryset.count()
+                }, status=status.HTTP_200_OK)
             else:
                 serializer = ExpenseSerializer(queryset)
-            
-            return Response(serializer.data)
-        except Exception as e:
-            #logger.error(f"Error in ExpenseView.get: {str(e)}")
+                return Response({
+                    'status': 'success',
+                    'message': 'Expense retrieved successfully',
+                    'data': serializer.data
+                }, status=status.HTTP_200_OK)
+        except Exception as Error:
+            #logger.error(f"Error in ExpenseView.get: {Error=} {type(Error)=}")
             return Response(
                 {"detail": "An error occurred while fetching expenses."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -75,8 +84,8 @@ class ExpenseView(APIView):
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        except Exception as e:
-            #logger.error(f"Error in ExpenseView.post: {str(e)}")
+        except Exception as Error:
+            #logger.error(f"Error in ExpenseView.post: {Error=} {type(Error)=}")
             return Response(
                 {"detail": "An error occurred while creating the expense."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -88,9 +97,13 @@ class ExpenseView(APIView):
             serializer = ExpenseSerializer(expense, data=request.data, context={'request': request})
             serializer.is_valid(raise_exception=True)
             serializer.save()
-            return Response(serializer.data)
-        except Exception as e:
-            #logger.error(f"Error in ExpenseView.put: {str(e)}")
+            return Response({
+                'status': 'success',
+                'message': 'Expense updated successfully',
+                'data': serializer.data
+            }, status=status.HTTP_200_OK)
+        except Exception as Error:
+            #logger.error(f"Error in ExpenseView.put: {Error=} {type(Error)=}")
             return Response(
                 {"detail": "An error occurred while updating the expense."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -102,9 +115,13 @@ class ExpenseView(APIView):
             serializer = ExpenseSerializer(expense, data=request.data, partial=True, context={'request': request})
             serializer.is_valid(raise_exception=True)
             serializer.save()
-            return Response(serializer.data)
-        except Exception as e:
-            #logger.error(f"Error in ExpenseView.patch: {str(e)}")
+            return Response({
+                'status': 'success',
+                'message': 'Expense partially updated successfully',
+                'data': serializer.data
+            }, status=status.HTTP_200_OK)
+        except Exception as Error:
+            #logger.error(f"Error in ExpenseView.patch: {Error=} {type(Error)=}")
             return Response(
                 {"detail": "An error occurred while updating the expense."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -115,8 +132,8 @@ class ExpenseView(APIView):
             expense = self.get_object(pk)
             expense.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
-        except Exception as e:
-            #logger.error(f"Error in ExpenseView.delete: {str(e)}")
+        except Exception as Error:
+            #logger.error(f"Error in ExpenseView.delete: {Error=} {type(Error)=}")
             return Response(
                 {"detail": "An error occurred while deleting the expense."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
