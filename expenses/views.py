@@ -1,5 +1,5 @@
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.exceptions import ValidationError, NotFound
@@ -13,7 +13,6 @@ import logging
 
 class ExpenseView(APIView):
     #permission_classes = [IsAuthenticated]
-    permission_classes = [AllowAny]
 
     def get_object(self, pk=None):
         #Get the expense object and verify ownership. If pk is None, returns all expenses for the user.
@@ -58,6 +57,8 @@ class ExpenseView(APIView):
                     queryset = queryset.order_by(ordering)
                 
                 serializer = ExpenseSerializer(queryset, many=True)
+                # many=True is used when you want to serialize multiple objects (a collection/queryset) rather than a single object.
+                # If you didn't use many=True with a queryset, you would get an error because the serializer wouldn't know how to handle multiple objects. It's a way to tell the serializer "hey, I'm giving you multiple objects, please serialize them as a list/array."
                 return Response({
                     'status': 'success',
                     'message': 'Expenses retrieved successfully',

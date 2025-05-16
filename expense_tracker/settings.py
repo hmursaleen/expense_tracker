@@ -112,7 +112,7 @@ REST_FRAMEWORK = {
         #This class will automatically handle the token parsing and validation for incoming requests.
     ),
     'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.IsAuthenticated',
+        #'rest_framework.permissions.IsAuthenticated',
         #Setting IsAuthenticated as a default permission ensures endpoints are protected by default. 
         #(For public endpoints like registration, you can override this in your views.)
         #Either you rely on the global default permissions (set in settings with IsAuthenticated),
