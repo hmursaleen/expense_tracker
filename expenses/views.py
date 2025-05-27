@@ -2,140 +2,165 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.exceptions import ValidationError, NotFound
+from rest_framework.exceptions import ValidationError, NotFound, PermissionDenied
+from django.db.models import Q
 from .models import Expense
 from .serializers import ExpenseSerializer
 from django.utils import timezone
 from datetime import timedelta, datetime
 import logging
+from functools import wraps
 
-#logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
+
+def handle_exceptions_and_ownership(func):
+    @wraps(func)
+    def wrapper(self, request, *args, **kwargs):
+        try:
+            if kwargs.get('pk') is not None:
+                expense = self.get_object(kwargs['pk'])
+                if expense.user != request.user:
+                    raise PermissionDenied("You do not have permission to access this expense.")
+                #kwargs['expense'] = expense  # Pass the verified expense to the view method
+            
+            return func(self, request, *args, **kwargs)
+        except ValidationError as e:
+            return Response(
+                {"detail": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except NotFound as e:
+            return Response(
+                {"detail": str(e)},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except PermissionDenied as e:
+            return Response(
+                {"detail": str(e)},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        except Exception as e:
+            logger.error(f"Unexpected error in {func.__name__}: {str(e)}", exc_info=True)
+            return Response(
+                {"detail": f"An error occurred while {func.__name__.replace('_', ' ')}."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    return wrapper
 
 class ExpenseView(APIView):
-    #permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def get_object(self, pk=None):
-        #Get the expense object and verify ownership. If pk is None, returns all expenses for the user.
-        
         try:
             if pk is None:
                 return Expense.objects.filter(user=self.request.user)
-            expense = Expense.objects.get(pk=pk, user=self.request.user)
-            return expense
+            return Expense.objects.get(pk=pk, user=self.request.user)
         except Expense.DoesNotExist:
             raise NotFound("Expense not found.")
 
-    def get(self, request, pk=None):
+    def validate_date_range(self, start_date_str, end_date_str):
         try:
-            queryset = self.get_object(pk)
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
             
-            if pk is None:
-                # Apply filters
-                filter_type = request.query_params.get('filter')
-                if filter_type:
-                    today = timezone.now().date()
-                    if filter_type == 'past_week':
-                        queryset = queryset.filter(date__gte=today - timedelta(days=7))
-                    elif filter_type == 'past_month':
-                        queryset = queryset.filter(date__gte=today - timedelta(days=30))
-                    elif filter_type == 'last_3_months':
-                        queryset = queryset.filter(date__gte=today - timedelta(days=90))
-                    elif filter_type == 'custom':
-                        start_date = request.query_params.get('start_date')
-                        end_date = request.query_params.get('end_date')
-                        if start_date and end_date:
-                            queryset = queryset.filter(date__range=[start_date, end_date])
-                
-                # Apply search
-                search = request.query_params.get('search')
-                if search:
-                    queryset = queryset.filter(description__icontains=search) | queryset.filter(category__icontains=search)
-                
-                # Apply ordering
-                ordering = request.query_params.get('ordering', '-date')
-                if ordering.lstrip('-') in ['date', 'amount', 'created_at']:
-                    queryset = queryset.order_by(ordering)
-                
-                serializer = ExpenseSerializer(queryset, many=True)
-                # many=True is used when you want to serialize multiple objects (a collection/queryset) rather than a single object.
-                # If you didn't use many=True with a queryset, you would get an error because the serializer wouldn't know how to handle multiple objects. It's a way to tell the serializer "hey, I'm giving you multiple objects, please serialize them as a list/array."
-                return Response({
-                    'status': 'success',
-                    'message': 'Expenses retrieved successfully',
-                    'data': serializer.data,
-                    'count': queryset.count()
-                }, status=status.HTTP_200_OK)
-            else:
-                serializer = ExpenseSerializer(queryset)
-                return Response({
-                    'status': 'success',
-                    'message': 'Expense retrieved successfully',
-                    'data': serializer.data
-                }, status=status.HTTP_200_OK)
-        except Exception as Error:
-            #logger.error(f"Error in ExpenseView.get: {Error=} {type(Error)=}")
-            return Response(
-                {"detail": "An error occurred while fetching expenses."},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+            if start_date > end_date:
+                raise ValidationError("Start date cannot be later than end date.")
+            
+            if end_date > timezone.now().date():
+                raise ValidationError("End date cannot be in the future.")
+            
+            return start_date, end_date
+        except ValueError:
+            raise ValidationError("Invalid date format. Use YYYY-MM-DD format for dates.")
 
+    def apply_filters(self, queryset, params):
+        # Apply date filters
+        filter_type = params.get('filter')
+        if filter_type:
+            today = timezone.now().date()
+            if filter_type == 'past_week':
+                queryset = queryset.filter(date__gte=today - timedelta(days=7))
+            elif filter_type == 'past_month':
+                queryset = queryset.filter(date__gte=today - timedelta(days=30))
+            elif filter_type == 'last_3_months':
+                queryset = queryset.filter(date__gte=today - timedelta(days=90))
+            elif filter_type == 'custom':
+                start_date = params.get('start_date')
+                end_date = params.get('end_date')
+                if not (start_date and end_date):
+                    raise ValidationError("Both start_date and end_date are required for custom date filtering.")
+                
+                start_date, end_date = self.validate_date_range(start_date, end_date)
+                queryset = queryset.filter(date__range=[start_date, end_date])
+        
+        # Apply search
+        search = params.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(description__icontains=search) | 
+                Q(category__icontains=search)
+            )
+        
+        # Apply category filter
+        category = params.get('category')
+        if category:
+            queryset = queryset.filter(category=category)
+        
+        # Apply amount range filter
+        min_amount = params.get('min_amount')
+        max_amount = params.get('max_amount')
+        if min_amount:
+            queryset = queryset.filter(amount__gte=min_amount)
+        if max_amount:
+            queryset = queryset.filter(amount__lte=max_amount)
+        
+        return queryset
+
+    @handle_exceptions_and_ownership
+    def get(self, request, pk=None):
+        queryset = self.get_object(pk)
+        
+        if pk is None:
+            # Apply filters
+            queryset = self.apply_filters(queryset, request.query_params)
+            
+            # Apply ordering
+            ordering = request.query_params.get('ordering', '-date')
+            if ordering.lstrip('-') in ['date', 'amount', 'created_at']:
+                queryset = queryset.order_by(ordering)
+            
+            serializer = ExpenseSerializer(queryset, many=True)
+
+        else:
+            serializer = ExpenseSerializer(queryset)
+        
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @handle_exceptions_and_ownership
     def post(self, request):
-        try:
-            serializer = ExpenseSerializer(data=request.data, context={'request': request})
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        except Exception as Error:
-            #logger.error(f"Error in ExpenseView.post: {Error=} {type(Error)=}")
-            return Response(
-                {"detail": "An error occurred while creating the expense."},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+        serializer = ExpenseSerializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+    @handle_exceptions_and_ownership
     def put(self, request, pk):
-        try:
-            expense = self.get_object(pk)
-            serializer = ExpenseSerializer(expense, data=request.data, context={'request': request})
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response({
-                'status': 'success',
-                'message': 'Expense updated successfully',
-                'data': serializer.data
-            }, status=status.HTTP_200_OK)
-        except Exception as Error:
-            #logger.error(f"Error in ExpenseView.put: {Error=} {type(Error)=}")
-            return Response(
-                {"detail": "An error occurred while updating the expense."},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+        expense = self.get_object(pk)
+        serializer = ExpenseSerializer(expense, data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @handle_exceptions_and_ownership
     def patch(self, request, pk):
-        try:
-            expense = self.get_object(pk)
-            serializer = ExpenseSerializer(expense, data=request.data, partial=True, context={'request': request})
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response({
-                'status': 'success',
-                'message': 'Expense partially updated successfully',
-                'data': serializer.data
-            }, status=status.HTTP_200_OK)
-        except Exception as Error:
-            #logger.error(f"Error in ExpenseView.patch: {Error=} {type(Error)=}")
-            return Response(
-                {"detail": "An error occurred while updating the expense."},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+        expense = self.get_object(pk)
+        serializer = ExpenseSerializer(expense, data=request.data, partial=True, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @handle_exceptions_and_ownership
     def delete(self, request, pk):
-        try:
-            expense = self.get_object(pk)
-            expense.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        except Exception as Error:
-            #logger.error(f"Error in ExpenseView.delete: {Error=} {type(Error)=}")
-            return Response(
-                {"detail": "An error occurred while deleting the expense."},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+        expense = self.get_object(pk)
+        expense.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

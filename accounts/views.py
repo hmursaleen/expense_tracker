@@ -4,8 +4,8 @@ from rest_framework import status
 from django.contrib.auth import login
 from .serializers import UserRegistrationSerializer, UserLoginSerializer
 from rest_framework.permissions import AllowAny
-#import logging
-#logger = logging.getLogger(__name__)
+import logging
+logger = logging.getLogger(__name__)
 
 
 '''
@@ -66,5 +66,5 @@ class UserLoginView(APIView):
             #we optionally call Django’s login() method if you plan to use session-based authentication. Later, when integrating JWT, the authentication mechanism will change.
             return Response({"message": "Login successful."}, status=status.HTTP_200_OK)
         
-        #logger.info("Login failed: %s", serializer.errors)
+        logger.info("Login failed: %s", serializer.errors)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

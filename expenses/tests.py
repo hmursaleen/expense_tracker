@@ -149,6 +149,7 @@ class ExpenseCRUDTests(APITestCase):
         response = self.client.get(expense_detail_url, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['description'], "Expense 1")
+       
 
     def test_update_expense(self):
         """

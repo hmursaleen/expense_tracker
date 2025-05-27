@@ -2,7 +2,7 @@ from rest_framework import serializers
 from .models import Expense
 
 class ExpenseSerializer(serializers.ModelSerializer):
-    valid_categories = None #Cache the valid categories
+    _valid_categories = None #Cache the valid categories
 
     class Meta:
         model = Expense

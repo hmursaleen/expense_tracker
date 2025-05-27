@@ -121,7 +121,7 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=10), #Access tokens are used to authenticate requests to protected resources
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=7), #Access tokens are used to authenticate requests to protected resources
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
     #Refresh tokens are used to obtain new access tokens without requiring the user to re-authenticate.
     #A longer refresh token lifetime allows users to maintain a session for a longer period.
@@ -190,7 +190,7 @@ To ensure that these logged errors are captured (for example, in the console or 
 , you should configure Django’s logging in your settings.py. Here’s a sample configuration:
 '''
 
-'''
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -229,4 +229,3 @@ LOGGING = {
         },
     },
 }
-'''
