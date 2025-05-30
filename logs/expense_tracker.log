@@ -960,3 +960,6 @@ Traceback (most recent call last):
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 TypeError: ExpenseView.get() missing 1 required positional argument: 'expense'
 [2025-05-27 18:32:17,263] ERROR [django.request] Internal Server Error: /api/v1/expenses/
+[2025-05-28 18:43:16,855] INFO [django.utils.autoreload] Watching for file changes with StatReloader
+[2025-05-28 18:46:13,622] INFO [django.utils.autoreload] Watching for file changes with StatReloader
+[2025-05-30 18:16:30,310] INFO [django.utils.autoreload] Watching for file changes with StatReloader

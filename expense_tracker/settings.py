@@ -26,7 +26,7 @@ SECRET_KEY = config('SECRET_KEY', default='hsfhiuhrisnfjknskhfuq8u8u4093840934-0
 #DEBUG = True
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = config("ALLOWED_HOSTS","127.0.0.1").split(",")
 
 
 # Application definition
